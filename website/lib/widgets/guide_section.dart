@@ -21,9 +21,9 @@ class GuideSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppTheme.successGreen.withOpacity(0.12),
+                  color: AppTheme.successGreen.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.successGreen.withOpacity(0.3)),
+                  border: Border.all(color: AppTheme.successGreen.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   I18n.get('guide_tag'),
@@ -168,9 +168,9 @@ class GuideSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryBlue.withOpacity(0.12),
+                  color: AppTheme.primaryBlue.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.3)),
+                  border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   I18n.get('guide_fn_header'),
@@ -287,9 +287,9 @@ class GuideSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppTheme.accentPurple.withOpacity(0.12),
+                  color: AppTheme.accentPurple.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.accentPurple.withOpacity(0.3)),
+                  border: Border.all(color: AppTheme.accentPurple.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   I18n.get('guide_pro_header'),
@@ -419,9 +419,9 @@ class GuideSection extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.15),
+                  color: iconColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: iconColor.withOpacity(0.3)),
+                  border: Border.all(color: iconColor.withValues(alpha: 0.3)),
                 ),
                 child: Center(
                   child: Icon(icon, color: iconColor, size: 20),
@@ -470,7 +470,7 @@ class GuideSection extends StatelessWidget {
               onPressed: () => launchUrl(Uri.parse(actionUrl)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.secondaryBlue,
-                side: BorderSide(color: AppTheme.primaryBlue.withOpacity(0.4)),
+                side: BorderSide(color: AppTheme.primaryBlue.withValues(alpha: 0.4)),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -500,7 +500,7 @@ class GuideSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accentColor.withOpacity(0.25)),
+        border: Border.all(color: accentColor.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -512,9 +512,9 @@ class GuideSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.15),
+                  color: accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: accentColor.withOpacity(0.4)),
+                  border: Border.all(color: accentColor.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -541,7 +541,7 @@ class GuideSection extends StatelessWidget {
                   color: accentColor,
                   boxShadow: [
                     BoxShadow(
-                      color: accentColor.withOpacity(0.5),
+                      color: accentColor.withValues(alpha: 0.5),
                       blurRadius: 6,
                       spreadRadius: 1,
                     ),
@@ -596,7 +596,7 @@ class GuideSection extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.12),
+                  color: iconColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(

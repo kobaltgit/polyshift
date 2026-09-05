@@ -28,9 +28,9 @@ class HeroSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryBlue.withOpacity(0.12),
+                  color: AppTheme.primaryBlue.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.35)),
+                  border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.35)),
                 ),
                 child: Text(
                   I18n.get('hero_badge'),

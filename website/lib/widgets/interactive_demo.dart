@@ -195,9 +195,9 @@ class _InteractiveDemoState extends State<InteractiveDemo> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryBlue.withOpacity(0.2),
+                              color: AppTheme.primaryBlue.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.4)),
+                              border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.4)),
                             ),
                             child: Text(
                               active['badge']!,

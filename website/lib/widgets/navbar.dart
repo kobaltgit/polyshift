@@ -22,7 +22,7 @@ class Navbar extends StatelessWidget {
       height: 70,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: AppTheme.bgBase.withOpacity(0.85),
+        color: AppTheme.bgBase.withValues(alpha: 0.85),
         border: const Border(
           bottom: BorderSide(color: AppTheme.borderSubtle, width: 1),
         ),
@@ -70,9 +70,9 @@ class Navbar extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryBlue.withOpacity(0.15),
+                        color: AppTheme.primaryBlue.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.3)),
+                        border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.3)),
                       ),
                       child: const Text(
                         'v2.0',
