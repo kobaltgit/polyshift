@@ -146,9 +146,6 @@
       </div>
     </div>
 
-    <!-- Draggable spacer occupying remaining space with micro-opacity for Win32 hit-testing -->
-    <div class="drag-spacer" data-tauri-drag-region></div>
-
     <div class="hud-header-actions">
       {#if outputText}
         <button 
@@ -294,17 +291,6 @@
     align-items: center;
     gap: 8px;
     cursor: grab;
-  }
-
-  .drag-spacer {
-    flex: 1;
-    align-self: stretch;
-    cursor: grab;
-    background: rgba(255, 255, 255, 0.005);
-  }
-
-  .drag-spacer:active {
-    cursor: grabbing;
   }
 
   .app-icon-badge {
