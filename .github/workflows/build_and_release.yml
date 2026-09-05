@@ -1,0 +1,53 @@
+name: Build and Release PolyShift
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+
+      - name: Build Tauri Desktop App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'PolyShift ${{ github.ref_name }}'
+          releaseBody: |
+            ## PolyShift ${{ github.ref_name }}
+            
+            ### 🚀 Установка
+            * **Установщик Windows (NSIS)**: `PolyShift_${{ github.ref_name }}_x64-setup.exe`
+            * **Портабельная версия**: `PolyShift-${{ github.ref_name }}-Portable-x64.zip`
+            
+            ### 📖 Возможности:
+            * Быстрый перевод по Alt+T
+            * Исправление грамматики и стиля по Alt+G
+            * Суммаризация текста по Alt+S
+            * Анализ и объяснение по Alt+E
+          releaseDraft: false
+          prerelease: false

@@ -1,0 +1,51 @@
+name: Deploy Website to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'website/**'
+      - '.github/workflows/deploy_pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: |
+          cd website
+          flutter pub get
+
+      - name: Build Web App
+        run: |
+          cd website
+          flutter build web --release --base-href /polyshift/
+
+      - name: Upload GitHub Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/build/web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

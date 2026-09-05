@@ -6,6 +6,11 @@ dist/
 .vite/
 *.tsbuildinfo
 
+# Flutter & Dart
+.dart_tool/
+website/.dart_tool/
+website/build/
+
 # Rust & Tauri
 src-tauri/target/
 src-tauri/WixTools/
