@@ -297,6 +297,7 @@
     align-items: center;
     gap: 8px;
     cursor: grab;
+    flex: 1;
   }
 
   .app-icon-badge {
