@@ -58,6 +58,7 @@ pub fn run() {
             commands::fetch_models_from_api,
             commands::check_updates,
             commands::copy_text,
+            commands::drag_hud,
             commands::hide_hud,
             commands::hide_settings,
             commands::exit_application

@@ -70,8 +70,8 @@
 
     if (e.button === 0 && isTauri) {
       try {
-        const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-        await getCurrentWebviewWindow().startDragging();
+        const { invoke } = await import('@tauri-apps/api/core');
+        await invoke('drag_hud');
       } catch (err) {
         console.error('Failed to start dragging', err);
       }

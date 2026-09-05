@@ -96,6 +96,11 @@ pub fn copy_text(text: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn drag_hud(window: tauri::WebviewWindow) {
+    let _ = window.start_dragging();
+}
+
+#[tauri::command]
 pub fn hide_hud(app: AppHandle) {
     if let Some(hud) = app.get_webview_window("hud") {
         let _ = hud.hide();

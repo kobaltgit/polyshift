@@ -141,44 +141,45 @@ fn show_hud_window(app: &AppHandle) {
                 let win_w = win_size.width as i32;
                 let win_h = win_size.height as i32;
 
-                // Query monitor bounds where cursor is located
-                let (mon_x, mon_y, mon_w, mon_h) = if let Ok(Some(mon)) = hud.current_monitor() {
-                    let pos = mon.position();
-                    let size = mon.size();
-                    (pos.x, pos.y, size.width as i32, size.height as i32)
-                } else if let Ok(Some(mon)) = hud.primary_monitor() {
-                    let pos = mon.position();
-                    let size = mon.size();
-                    (pos.x, pos.y, size.width as i32, size.height as i32)
+                // Find the specific monitor where the cursor currently is
+                let (mon_x, mon_y, mon_w, mon_h) = if let Ok(monitors) = hud.available_monitors() {
+                    monitors
+                        .into_iter()
+                        .find(|m| {
+                            let p = m.position();
+                            let s = m.size();
+                            pt.x >= p.x && pt.x < p.x + s.width as i32 && pt.y >= p.y && pt.y < p.y + s.height as i32
+                        })
+                        .map(|m| {
+                            let p = m.position();
+                            let s = m.size();
+                            (p.x, p.y, s.width as i32, s.height as i32)
+                        })
+                        .unwrap_or((0, 0, 1920, 1080))
                 } else {
                     (0, 0, 1920, 1080)
                 };
 
-                // Vertical positioning:
-                // Default: below cursor. If that clips bottom of monitor / taskbar, flip above cursor!
-                let bottom_margin = 52; // Account for Windows taskbar
-                let mut target_y = pt.y + 16;
-                if target_y + win_h > mon_y + mon_h - bottom_margin {
-                    target_y = pt.y - win_h - 16;
+                // Position right next to cursor
+                let mut target_x = pt.x + 12;
+                let mut target_y = pt.y + 12;
+
+                // Gently clamp to monitor work area so window is never cut off
+                let bottom_padding = 54; // Account for Windows taskbar
+                let max_y = mon_y + mon_h - bottom_padding - win_h;
+                if target_y > max_y {
+                    target_y = max_y;
                 }
-                // Clamp within vertical monitor boundaries
-                if target_y < mon_y + 10 {
-                    target_y = mon_y + 10;
-                } else if target_y + win_h > mon_y + mon_h - bottom_margin {
-                    target_y = (mon_y + mon_h - bottom_margin - win_h).max(mon_y + 10);
+                if target_y < mon_y + 8 {
+                    target_y = mon_y + 8;
                 }
 
-                // Horizontal positioning:
-                // Default: next to cursor. If that clips right edge of monitor, flip to left of cursor!
-                let mut target_x = pt.x + 16;
-                if target_x + win_w > mon_x + mon_w - 16 {
-                    target_x = pt.x - win_w - 16;
+                let max_x = mon_x + mon_w - 16 - win_w;
+                if target_x > max_x {
+                    target_x = max_x;
                 }
-                // Clamp within horizontal monitor boundaries
-                if target_x < mon_x + 10 {
-                    target_x = mon_x + 10;
-                } else if target_x + win_w > mon_x + mon_w - 16 {
-                    target_x = (mon_x + mon_w - 16 - win_w).max(mon_x + 10);
+                if target_x < mon_x + 8 {
+                    target_x = mon_x + 8;
                 }
 
                 let _ = hud.set_position(PhysicalPosition::new(target_x, target_y));
