@@ -70,6 +70,13 @@ fn handle_action_trigger(app: &AppHandle, action: AiAction) {
             Ok(text) => text,
             Err(err) => {
                 show_hud_window(&app_clone);
+                let payload = ActionPayload {
+                    action,
+                    badge: action.badge(),
+                    title: action.title(),
+                    source_text: String::new(),
+                };
+                let _ = app_clone.emit("action-started", &payload);
                 let _ = app_clone.emit("stream-error", &err);
                 return;
             }

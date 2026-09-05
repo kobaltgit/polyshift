@@ -3,40 +3,79 @@ use std::thread;
 use std::time::Duration;
 use windows_sys::Win32::Foundation::HWND;
 use windows_sys::Win32::System::DataExchange::{
-    CloseClipboard, EmptyClipboard, GetClipboardData, OpenClipboard, SetClipboardData,
+    CloseClipboard, EmptyClipboard, GetClipboardData, GetClipboardSequenceNumber, OpenClipboard,
+    SetClipboardData,
 };
 use windows_sys::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE};
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
-    SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, VK_CONTROL, VK_MENU, VK_SHIFT,
+    GetAsyncKeyState, MapVirtualKeyW, SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT,
+    KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC, VK_CONTROL, VK_MENU, VK_SHIFT,
 };
 
 const CF_UNICODETEXT: u32 = 13;
 
-/// Safely captures highlighted text by releasing modifiers and simulating Ctrl+C.
+/// Attempts to open the clipboard with retries in case another process holds it.
+fn try_open_clipboard(max_retries: u32, delay_ms: u64) -> bool {
+    for _ in 0..max_retries {
+        unsafe {
+            if OpenClipboard(0 as HWND) != 0 {
+                return true;
+            }
+        }
+        thread::sleep(Duration::from_millis(delay_ms));
+    }
+    false
+}
+
+/// Safely captures highlighted text by waiting for physical key release,
+/// suppressing the Win32 Alt-menu loop, and sending hardware scan codes.
 pub fn capture_selected_text() -> Result<String, String> {
-    // 1. Force release physical modifier keys (Alt, Ctrl, Shift)
-    release_modifier_keys();
-    thread::sleep(Duration::from_millis(40));
+    // 0. Backup existing clipboard content as graceful fallback
+    let pre_existing_text = get_clipboard_text().ok().unwrap_or_default();
+    let initial_seq = unsafe { GetClipboardSequenceNumber() };
 
-    // 2. Clear clipboard first to avoid reading stale data
+    // 1. Wait for physical keys (Alt, etc.) to be released by user's fingers (up to 150ms)
+    wait_for_physical_modifier_release();
+
+    // 2. Clear clipboard so we can definitively detect new text
     let _ = clear_clipboard();
-    thread::sleep(Duration::from_millis(20));
+    thread::sleep(Duration::from_millis(30));
 
-    // 3. Send Ctrl + C
-    simulate_ctrl_c();
+    // 3. Send Ctrl + C with hardware scan codes and Alt-suppression
+    simulate_ctrl_c_robust();
 
-    // 4. Wait for application to copy text (up to 300ms polling)
-    for _ in 0..12 {
+    // 4. Wait for application to copy text (up to 1000ms polling for PDF readers / heavy apps)
+    // 40 iterations * 25ms = 1000ms maximum, returns instantly as soon as text is ready
+    for _ in 0..40 {
         thread::sleep(Duration::from_millis(25));
-        if let Ok(text) = get_clipboard_text() {
-            let trimmed = text.trim();
-            if !trimmed.is_empty() {
-                return Ok(trimmed.to_string());
+        let current_seq = unsafe { GetClipboardSequenceNumber() };
+        if current_seq != initial_seq {
+            if let Ok(text) = get_clipboard_text() {
+                let trimmed = text.trim();
+                if !trimmed.is_empty() {
+                    return Ok(trimmed.to_string());
+                }
             }
         }
     }
 
-    Err("Не удалось захватить текст: убедитесь, что фрагмент выделен".into())
+    // 5. Final attempt: check if clipboard has text even if sequence didn't register
+    if let Ok(text) = get_clipboard_text() {
+        let trimmed = text.trim();
+        if !trimmed.is_empty() {
+            return Ok(trimmed.to_string());
+        }
+    }
+
+    // 6. Graceful fallback: If synthetic Ctrl+C was blocked by the target app,
+    // but the user had already copied text before pressing the hotkey, restore and use it!
+    let trimmed_pre = pre_existing_text.trim();
+    if !trimmed_pre.is_empty() {
+        let _ = set_clipboard_text(trimmed_pre);
+        return Ok(trimmed_pre.to_string());
+    }
+
+    Err("Не удалось захватить текст: убедитесь, что фрагмент выделен (или скопируйте его через Ctrl+C перед вызовом)".into())
 }
 
 /// Sets unicode text directly to the Windows clipboard.
@@ -44,11 +83,11 @@ pub fn set_clipboard_text(text: &str) -> Result<(), String> {
     let wide: Vec<u16> = text.encode_utf16().chain(std::iter::once(0)).collect();
     let byte_len = wide.len() * 2;
 
-    unsafe {
-        if OpenClipboard(0 as HWND) == 0 {
-            return Err("Cannot open clipboard to write".into());
-        }
+    if !try_open_clipboard(8, 10) {
+        return Err("Cannot open clipboard to write".into());
+    }
 
+    unsafe {
         EmptyClipboard();
 
         let h_mem = GlobalAlloc(GMEM_MOVEABLE, byte_len);
@@ -74,11 +113,11 @@ pub fn set_clipboard_text(text: &str) -> Result<(), String> {
 
 /// Reads current unicode text from Windows clipboard.
 pub fn get_clipboard_text() -> Result<String, String> {
-    unsafe {
-        if OpenClipboard(0 as HWND) == 0 {
-            return Err("Cannot open clipboard to read".into());
-        }
+    if !try_open_clipboard(8, 10) {
+        return Err("Cannot open clipboard to read".into());
+    }
 
+    unsafe {
         let h_data = GetClipboardData(CF_UNICODETEXT);
         if h_data.is_null() {
             CloseClipboard();
@@ -107,94 +146,57 @@ pub fn get_clipboard_text() -> Result<String, String> {
 }
 
 fn clear_clipboard() -> Result<(), String> {
-    unsafe {
-        if OpenClipboard(0 as HWND) != 0 {
+    if try_open_clipboard(5, 10) {
+        unsafe {
             EmptyClipboard();
             CloseClipboard();
-            Ok(())
-        } else {
-            Err("Cannot open clipboard to empty".into())
         }
+        Ok(())
+    } else {
+        Err("Cannot open clipboard to empty".into())
     }
 }
 
-fn release_modifier_keys() {
-    let keys = [VK_MENU, VK_CONTROL, VK_SHIFT];
-    for &vk in &keys {
-        let mut input = INPUT {
-            r#type: INPUT_KEYBOARD,
-            Anonymous: windows_sys::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                ki: KEYBDINPUT {
-                    wVk: vk,
-                    wScan: 0,
-                    dwFlags: KEYEVENTF_KEYUP,
-                    time: 0,
-                    dwExtraInfo: 0,
-                },
-            },
-        };
-        unsafe {
-            SendInput(1, &mut input, std::mem::size_of::<INPUT>() as i32);
+/// Waits for physical modifier keys (Alt, Ctrl, Shift) to be released by user.
+fn wait_for_physical_modifier_release() {
+    for _ in 0..10 {
+        let alt_down = unsafe { (GetAsyncKeyState(VK_MENU as i32) as u16 & 0x8000) != 0 };
+        let ctrl_down = unsafe { (GetAsyncKeyState(VK_CONTROL as i32) as u16 & 0x8000) != 0 };
+        let shift_down = unsafe { (GetAsyncKeyState(VK_SHIFT as i32) as u16 & 0x8000) != 0 };
+        if !alt_down && !ctrl_down && !shift_down {
+            break;
         }
+        thread::sleep(Duration::from_millis(15));
     }
 }
 
-fn simulate_ctrl_c() {
-    // KeyDown Ctrl, KeyDown 'C', KeyUp 'C', KeyUp Ctrl
-    let mut inputs: [INPUT; 4] = [
-        // Ctrl Down
-        INPUT {
-            r#type: INPUT_KEYBOARD,
-            Anonymous: windows_sys::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                ki: KEYBDINPUT {
-                    wVk: VK_CONTROL,
-                    wScan: 0,
-                    dwFlags: 0,
-                    time: 0,
-                    dwExtraInfo: 0,
-                },
-            },
-        },
-        // 'C' Down (0x43)
-        INPUT {
-            r#type: INPUT_KEYBOARD,
-            Anonymous: windows_sys::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                ki: KEYBDINPUT {
-                    wVk: 0x43,
-                    wScan: 0,
-                    dwFlags: 0,
-                    time: 0,
-                    dwExtraInfo: 0,
-                },
-            },
-        },
-        // 'C' Up
-        INPUT {
-            r#type: INPUT_KEYBOARD,
-            Anonymous: windows_sys::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                ki: KEYBDINPUT {
-                    wVk: 0x43,
-                    wScan: 0,
-                    dwFlags: KEYEVENTF_KEYUP,
-                    time: 0,
-                    dwExtraInfo: 0,
-                },
-            },
-        },
-        // Ctrl Up
-        INPUT {
-            r#type: INPUT_KEYBOARD,
-            Anonymous: windows_sys::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                ki: KEYBDINPUT {
-                    wVk: VK_CONTROL,
-                    wScan: 0,
-                    dwFlags: KEYEVENTF_KEYUP,
-                    time: 0,
-                    dwExtraInfo: 0,
-                },
-            },
-        },
-    ];
+/// Sends Ctrl+C with full hardware scan codes.
+/// Crucially, we press Ctrl DOWN first before releasing Alt/Shift,
+/// which tells Windows this is a combo and prevents Win32 apps (like PDF-XChange Viewer)
+/// from entering the menu bar loop (SC_KEYMENU).
+fn simulate_ctrl_c_robust() {
+    let ctrl_scan = unsafe { MapVirtualKeyW(VK_CONTROL as u32, MAPVK_VK_TO_VSC) } as u16;
+    let c_scan = unsafe { MapVirtualKeyW(0x43, MAPVK_VK_TO_VSC) } as u16;
+    let alt_scan = unsafe { MapVirtualKeyW(VK_MENU as u32, MAPVK_VK_TO_VSC) } as u16;
+    let shift_scan = unsafe { MapVirtualKeyW(VK_SHIFT as u32, MAPVK_VK_TO_VSC) } as u16;
+
+    let mut inputs: Vec<INPUT> = Vec::with_capacity(8);
+
+    // 1. Press Ctrl DOWN first (suppresses Alt menu activation)
+    inputs.push(create_key_input(VK_CONTROL, ctrl_scan, 0));
+
+    // 2. Release Alt and Shift if held
+    inputs.push(create_key_input(VK_MENU, alt_scan, KEYEVENTF_KEYUP));
+    inputs.push(create_key_input(VK_SHIFT, shift_scan, KEYEVENTF_KEYUP));
+
+    // 3. Press 'C' DOWN
+    inputs.push(create_key_input(0x43, c_scan, 0));
+
+    // 4. Release 'C' UP
+    inputs.push(create_key_input(0x43, c_scan, KEYEVENTF_KEYUP));
+
+    // 5. Release Ctrl UP
+    inputs.push(create_key_input(VK_CONTROL, ctrl_scan, KEYEVENTF_KEYUP));
 
     unsafe {
         SendInput(
@@ -202,5 +204,20 @@ fn simulate_ctrl_c() {
             inputs.as_mut_ptr(),
             std::mem::size_of::<INPUT>() as i32,
         );
+    }
+}
+
+fn create_key_input(vk: u16, scan: u16, flags: u32) -> INPUT {
+    INPUT {
+        r#type: INPUT_KEYBOARD,
+        Anonymous: windows_sys::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+            ki: KEYBDINPUT {
+                wVk: vk,
+                wScan: scan,
+                dwFlags: flags,
+                time: 0,
+                dwExtraInfo: 0,
+            },
+        },
     }
 }
