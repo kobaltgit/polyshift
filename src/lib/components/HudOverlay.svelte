@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { marked } from 'marked';
+  import { invoke } from '@tauri-apps/api/core';
   import { 
     Copy, 
     Check, 
@@ -38,7 +39,6 @@
   async function hideHud() {
     if (isTauri) {
       try {
-        const { invoke } = await import('@tauri-apps/api/core');
         await invoke('hide_hud');
       } catch (e) {
         console.error('hide_hud error', e);
@@ -52,7 +52,6 @@
     if (!outputText) return;
     try {
       if (isTauri) {
-        const { invoke } = await import('@tauri-apps/api/core');
         await invoke('copy_text', { text: outputText });
       } else {
         await navigator.clipboard.writeText(outputText);
@@ -64,17 +63,12 @@
     }
   }
 
-  async function startDrag(e: MouseEvent) {
+  function startDrag(e: MouseEvent) {
     const target = e.target as HTMLElement;
     if (target && target.closest('button')) return;
 
     if (e.button === 0 && isTauri) {
-      try {
-        const { invoke } = await import('@tauri-apps/api/core');
-        await invoke('drag_hud');
-      } catch (err) {
-        console.error('Failed to start dragging', err);
-      }
+      invoke('drag_hud').catch((err) => console.error('Failed to start dragging', err));
     }
   }
 
@@ -151,6 +145,9 @@
         <span class="hud-badge">{badge}</span>
       </div>
     </div>
+
+    <!-- Draggable spacer occupying remaining space with micro-opacity for Win32 hit-testing -->
+    <div class="drag-spacer" data-tauri-drag-region></div>
 
     <div class="hud-header-actions">
       {#if outputText}
@@ -297,7 +294,17 @@
     align-items: center;
     gap: 8px;
     cursor: grab;
+  }
+
+  .drag-spacer {
     flex: 1;
+    align-self: stretch;
+    cursor: grab;
+    background: rgba(255, 255, 255, 0.005);
+  }
+
+  .drag-spacer:active {
+    cursor: grabbing;
   }
 
   .app-icon-badge {
