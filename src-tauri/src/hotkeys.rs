@@ -134,13 +134,54 @@ fn handle_action_trigger(app: &AppHandle, action: AiAction) {
 
 fn show_hud_window(app: &AppHandle) {
     if let Some(hud) = app.get_webview_window("hud") {
-        // Position window near cursor
         unsafe {
             let mut pt: POINT = std::mem::zeroed();
             if GetCursorPos(&mut pt) != 0 {
-                let pos_x = pt.x + 16;
-                let pos_y = pt.y + 16;
-                let _ = hud.set_position(PhysicalPosition::new(pos_x, pos_y));
+                let win_size = hud.outer_size().unwrap_or(tauri::PhysicalSize::new(480, 340));
+                let win_w = win_size.width as i32;
+                let win_h = win_size.height as i32;
+
+                // Query monitor bounds where cursor is located
+                let (mon_x, mon_y, mon_w, mon_h) = if let Ok(Some(mon)) = hud.current_monitor() {
+                    let pos = mon.position();
+                    let size = mon.size();
+                    (pos.x, pos.y, size.width as i32, size.height as i32)
+                } else if let Ok(Some(mon)) = hud.primary_monitor() {
+                    let pos = mon.position();
+                    let size = mon.size();
+                    (pos.x, pos.y, size.width as i32, size.height as i32)
+                } else {
+                    (0, 0, 1920, 1080)
+                };
+
+                // Vertical positioning:
+                // Default: below cursor. If that clips bottom of monitor / taskbar, flip above cursor!
+                let bottom_margin = 52; // Account for Windows taskbar
+                let mut target_y = pt.y + 16;
+                if target_y + win_h > mon_y + mon_h - bottom_margin {
+                    target_y = pt.y - win_h - 16;
+                }
+                // Clamp within vertical monitor boundaries
+                if target_y < mon_y + 10 {
+                    target_y = mon_y + 10;
+                } else if target_y + win_h > mon_y + mon_h - bottom_margin {
+                    target_y = (mon_y + mon_h - bottom_margin - win_h).max(mon_y + 10);
+                }
+
+                // Horizontal positioning:
+                // Default: next to cursor. If that clips right edge of monitor, flip to left of cursor!
+                let mut target_x = pt.x + 16;
+                if target_x + win_w > mon_x + mon_w - 16 {
+                    target_x = pt.x - win_w - 16;
+                }
+                // Clamp within horizontal monitor boundaries
+                if target_x < mon_x + 10 {
+                    target_x = mon_x + 10;
+                } else if target_x + win_w > mon_x + mon_w - 16 {
+                    target_x = (mon_x + mon_w - 16 - win_w).max(mon_x + 10);
+                }
+
+                let _ = hud.set_position(PhysicalPosition::new(target_x, target_y));
             }
         }
         let _ = hud.show();

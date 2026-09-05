@@ -64,6 +64,20 @@
     }
   }
 
+  async function startDrag(e: MouseEvent) {
+    const target = e.target as HTMLElement;
+    if (target && target.closest('button')) return;
+
+    if (e.button === 0 && isTauri) {
+      try {
+        const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+        await getCurrentWebviewWindow().startDragging();
+      } catch (err) {
+        console.error('Failed to start dragging', err);
+      }
+    }
+  }
+
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
       hideHud();
@@ -125,7 +139,9 @@
 
 <main class="hud-container animate-fade-in">
   <!-- Draggable Header -->
-  <header class="hud-header" data-tauri-drag-region>
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <header class="hud-header" data-tauri-drag-region role="region" aria-label="Панель заголовка окна" onmousedown={startDrag}>
     <div class="hud-header-left" data-tauri-drag-region>
       <div class="app-icon-badge">
         <Sparkles size={14} class="sparkle-icon" />
@@ -268,6 +284,12 @@
     background: rgba(15, 23, 42, 0.65);
     border-bottom: 1px solid rgba(148, 163, 184, 0.1);
     cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .hud-header:active {
+    cursor: grabbing;
   }
 
   .hud-header-left {
