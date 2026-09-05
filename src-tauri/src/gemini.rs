@@ -60,21 +60,22 @@ Output ONLY the translated text without commentary, pleasantries, or quotes:\n\n
             AiAction::Grammar => {
                 format!(
                     "You are an expert editor and linguist. \
-Fix all spelling, grammar, punctuation, and phrasing issues in the following text while strictly preserving its original meaning and tone. \
+Fix all spelling, grammar, punctuation, and phrasing issues in the following text while strictly preserving its original language, meaning, and tone. \
 Output ONLY the corrected and polished version without preamble, explanations, or quotes:\n\n{text}"
                 )
             }
             AiAction::Summarize => {
                 format!(
                     "You are an executive summarizer. \
-Summarize the key points of the following text in 2 to 3 concise, clear bullet points. \
-Use the same language as the input text. Output ONLY the summary bullets:\n\n{text}"
+Summarize the key points of the following text in 2 to 4 concise, clear bullet points. \
+Language requirement: write the summary in '{target_lang}'. Output ONLY the summary bullets:\n\n{text}"
                 )
             }
             AiAction::Explain => {
                 format!(
                     "You are a helpful senior developer and knowledge expert. \
-Explain the following text, term, idiom, code snippet, or error message clearly, practically, and concisely in Russian. \
+Explain the following text, term, idiom, code snippet, or error message clearly, practically, and concisely. \
+Language requirement: write the explanation in '{target_lang}'. \
 If it is code or an error, explain the cause and how to fix it. Output the explanation in clean markdown:\n\n{text}"
                 )
             }
