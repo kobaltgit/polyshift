@@ -49,3 +49,6 @@ $RECYCLE.BIN/
 .env
 .env.*
 !.env.example
+vc_cover_1000x420.jpg
+vc_cover_1000x420.png
+vc_cover_clean_1000x420.png
