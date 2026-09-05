@@ -1,0 +1,46 @@
+# Node & Frontend
+node_modules/
+build/
+dist/
+.svelte-kit/
+.vite/
+*.tsbuildinfo
+
+# Rust & Tauri
+src-tauri/target/
+src-tauri/WixTools/
+**/*.rs.bk
+
+# Legacy & Scratch
+legacy/
+legacy_wiki/
+scratch/
+raw-sources/
+.agents/
+.venv/
+__pycache__/
+*.pyc
+
+# OS & Temporary
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+*.log
+*.tmp
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Sensitive
+.env
+.env.*
+!.env.example
