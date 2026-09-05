@@ -43,8 +43,37 @@ class I18n {
     'guide_step3_desc': 'Нажмите правой кнопкой мыши по иконке PolyShift возле часов и выберите «Настройки». Вставьте ваш ключ, нажмите «Проверить» (появится зелёная галочка) и нажмите «Сохранить».',
 
     'guide_step4_num': '04',
-    'guide_step4_title': 'Выделяйте текст и жмите Alt + T',
-    'guide_step4_desc': 'Готово! Выделите любое предложение в браузере, коде или документе и нажмите Alt + T. Прямо у курсора побегут строчки перевода, который автоматически скопируется в буфер обмена.',
+    'guide_step4_title': 'Выделяйте текст и жмите хоткей',
+    'guide_step4_desc': 'Готово! Выделите любое слово или текст в браузере, коде или документе и нажмите нужное сочетание клавиш (Alt+T, Alt+G, Alt+S, Alt+E). Прямо у курсора появится окно с ответом!',
+
+    // All 4 AI Functions
+    'guide_fn_header': 'ВСЕ 4 РЕЖИМА РАБОТЫ',
+    'guide_fn_title': 'Горячие клавиши для любых задач',
+    'guide_fn_subtitle': 'Просто выделите любой фрагмент текста в любой программе Windows и нажмите нужное сочетание клавиш:',
+
+    'guide_fn_t_title': 'Alt + T — Умный перевод',
+    'guide_fn_t_desc': 'Мгновенный перевод с любого языка на ваш родной (по умолчанию — Русский, а если текст уже на русском — на английский). Идеально для сайтов, документации, книг и чатов.',
+
+    'guide_fn_g_title': 'Alt + G — Исправление грамматики и стиля',
+    'guide_fn_g_desc': 'Написали письмо на английском или пост? Выделите его и нажмите Alt + G. PolyShift исправит все грамматические и пунктуационные опечатки, отполирует стиль и сохранит исходный тон.',
+
+    'guide_fn_s_title': 'Alt + S — Суммаризация (Краткая выжимка)',
+    'guide_fn_s_desc': 'Перед вами длинная статья или отчет на 10 страниц? Выделите текст и нажмите Alt + S. Нейросеть моментально выделит 2–4 ключевых тезиса на вашем языке с самой сутью.',
+
+    'guide_fn_e_title': 'Alt + E — Анализ и объяснение',
+    'guide_fn_e_desc': 'Встретили сложный научный термин, иностранную идиому или непонятную ошибку в консоли кода? Alt + E подробно объяснит суть простым человеческим языком.',
+
+    // Pro Tips & Controls
+    'guide_pro_header': 'УПРАВЛЕНИЕ И ФИШКИ',
+    'guide_pro_title': 'Удобные возможности на каждый день',
+    'guide_pro_c1_title': 'Автокопирование в буфер',
+    'guide_pro_c1_desc': 'Не нужно нажимать лишних кнопок: готовый результат уже скопирован! Просто нажмите Ctrl + V в чате, письме или документе.',
+    'guide_pro_c2_title': 'Перетаскивание оверлея',
+    'guide_pro_c2_desc': 'Окно появилось поверх важного текста? Зажмите верхнюю панель HUD мышью и перетащите окно в любое удобное место экрана.',
+    'guide_pro_c3_title': 'Закрытие по клавише Esc',
+    'guide_pro_c3_desc': 'Прочитали перевод? Нажмите Esc на клавиатуре или кликните крестик в шапке — оверлей моментально скроется.',
+    'guide_pro_c4_title': 'Гибкие настройки в трее',
+    'guide_pro_c4_desc': 'В окне настроек можно в один клик сменить целевой язык, выбрать флагманскую модель Gemini (2.5 Flash / Pro) и включить автозапуск с Windows.',
 
     // Interactive Demo
     'demo_title': 'Попробуйте PolyShift в действии прямо сейчас',
@@ -125,8 +154,37 @@ class I18n {
     'guide_step3_desc': 'Right-click the PolyShift icon near the clock and choose "Settings". Paste your key, click "Check" (a green checkmark will appear), and click "Save".',
 
     'guide_step4_num': '04',
-    'guide_step4_title': 'Select Text & Press Alt + T',
-    'guide_step4_desc': 'You are all set! Select any sentence in your browser, IDE, or document and press Alt + T. A glass HUD appears streaming the translation, auto-copied to clipboard.',
+    'guide_step4_title': 'Select Text & Press Any Hotkey',
+    'guide_step4_desc': 'You are all set! Select text in any browser, IDE, or app and invoke the AI assistant with a single shortcut. Streamed right beside your cursor and auto-copied.',
+
+    // All 4 AI Functions
+    'guide_fn_header': 'ALL 4 OPERATING MODES',
+    'guide_fn_title': 'Hotkeys For Every Daily Task',
+    'guide_fn_subtitle': 'Simply select text in any Windows app and hit the designated shortcut:',
+
+    'guide_fn_t_title': 'Alt + T — Smart Translation',
+    'guide_fn_t_desc': 'Instant contextual translation between languages. Intelligently targets your native language (or English if the source is already native). Ideal for articles, manuals, and chats.',
+
+    'guide_fn_g_title': 'Alt + G — Grammar & Style Polish',
+    'guide_fn_g_desc': 'Drafting an email, post, or documentation? Select it and press Alt + G. PolyShift fixes typos, punctuation, grammar, and refines wording while keeping the original intent.',
+
+    'guide_fn_s_title': 'Alt + S — Summarization (TL;DR)',
+    'guide_fn_s_desc': 'Facing a 10-page report, terms of service, or long article? Press Alt + S to instantly extract 2–4 crisp bullet points highlighting the core essence.',
+
+    'guide_fn_e_title': 'Alt + E — Analysis & Explanation',
+    'guide_fn_e_desc': 'Encountered a complex scientific concept, rare foreign idiom, or cryptic code error message? Alt + E explains it thoroughly in plain, human-friendly terms.',
+
+    // Pro Tips & Controls
+    'guide_pro_header': 'CONTROLS & PRO FEATURES',
+    'guide_pro_title': 'Everyday Productivity Boosters',
+    'guide_pro_c1_title': 'Instant Clipboard Auto-Copy',
+    'guide_pro_c1_desc': 'No extra clicks required: generated results land straight in your clipboard. Hit Ctrl + V anywhere to paste immediately.',
+    'guide_pro_c2_title': 'HUD Window Dragging',
+    'guide_pro_c2_desc': 'Covering important text underneath? Click and hold the HUD header to drag the window anywhere across your screens.',
+    'guide_pro_c3_title': 'Instant Escape Dismissal',
+    'guide_pro_c3_desc': 'Finished reading? Press Esc on your keyboard or click the close cross icon — the HUD vanishes instantly.',
+    'guide_pro_c4_title': 'Settings in System Tray',
+    'guide_pro_c4_desc': 'Right-click the tray icon to switch target language, choose between Gemini 2.5 Flash and Pro, or toggle Windows startup.',
 
     // Interactive Demo
     'demo_title': 'Experience PolyShift Live',
