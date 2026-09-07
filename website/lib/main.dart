@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'i18n.dart';
 import 'theme.dart';
-import 'widgets/navbar.dart';
 import 'widgets/hero_section.dart';
 import 'widgets/guide_section.dart';
 import 'widgets/interactive_demo.dart';
@@ -9,7 +8,7 @@ import 'widgets/features_grid.dart';
 import 'widgets/comparison_table.dart';
 import 'widgets/faq_section.dart';
 import 'widgets/download_cta.dart';
-import 'widgets/footer.dart';
+import 'package:kobalt_ui/kobalt_ui.dart';
 
 void main() {
   runApp(const PolyShiftWebsiteApp());
@@ -69,33 +68,6 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
-  void _handleNavClick(String target) {
-    switch (target) {
-      case 'hero':
-        _scrollController.animateTo(
-          0,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-        break;
-      case 'guide':
-        _scrollToKey(_guideKey);
-        break;
-      case 'demo':
-        _scrollToKey(_demoKey);
-        break;
-      case 'features':
-        _scrollToKey(_featuresKey);
-        break;
-      case 'faq':
-        _scrollToKey(_faqKey);
-        break;
-      case 'download':
-        _scrollToKey(_downloadKey);
-        break;
-    }
-  }
-
   @override
   void dispose() {
     _scrollController.dispose();
@@ -120,36 +92,70 @@ class _LandingPageState extends State<LandingPage> {
             ),
           ),
 
-          // Main Scrollable Page
-          SingleChildScrollView(
-            controller: _scrollController,
-            child: Column(
-              children: [
-                const SizedBox(height: 70), // Spacer for fixed navbar
-                HeroSection(
-                  onGuideClick: () => _scrollToKey(_guideKey),
-                  onDownloadClick: () => _scrollToKey(_downloadKey),
-                ),
-                InteractiveDemo(key: _demoKey),
-                GuideSection(key: _guideKey),
-                FeaturesGrid(key: _featuresKey),
-                const ComparisonTable(),
-                FaqSection(key: _faqKey),
-                DownloadCta(key: _downloadKey),
-                const Footer(),
-              ],
-            ),
-          ),
+          // Main Column layout with fixed KobaltNavBar
+          Column(
+            children: [
+              KobaltNavBar(
+                project: KobaltProjectId.polyShift,
+                version: 'v1.0.0',
+                isRussian: I18n.isRussian,
+                onLanguageToggle: widget.onLanguageToggle,
+                accentColor: AppTheme.primaryBlue,
+                navLinks: [
+                  KobaltNavLink(
+                    label: I18n.get('nav_features'),
+                    onTap: () => _scrollToKey(_featuresKey),
+                  ),
+                  KobaltNavLink(
+                    label: I18n.get('nav_demo'),
+                    onTap: () => _scrollToKey(_demoKey),
+                  ),
+                  KobaltNavLink(
+                    label: I18n.get('nav_guide'),
+                    onTap: () => _scrollToKey(_guideKey),
+                  ),
+                  KobaltNavLink(
+                    label: I18n.get('nav_faq'),
+                    onTap: () => _scrollToKey(_faqKey),
+                  ),
+                ],
+                onDownloadTap: () => _scrollToKey(_downloadKey),
+              ),
 
-          // Top Navbar
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Navbar(
-              onLanguageToggle: widget.onLanguageToggle,
-              onNavClick: _handleNavClick,
-            ),
+              // Main Scrollable Page
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  child: Column(
+                    children: [
+                      HeroSection(
+                        onGuideClick: () => _scrollToKey(_guideKey),
+                        onDownloadClick: () => _scrollToKey(_downloadKey),
+                      ),
+                      InteractiveDemo(key: _demoKey),
+                      GuideSection(key: _guideKey),
+                      FeaturesGrid(key: _featuresKey),
+                      const ComparisonTable(),
+                      FaqSection(key: _faqKey),
+                      DownloadCta(key: _downloadKey),
+                      KobaltFooter(
+                        project: KobaltProjectId.polyShift,
+                        version: 'v1.0.0',
+                        isRussian: I18n.isRussian,
+                        accentColor: AppTheme.primaryBlue,
+                        onBackToTop: () {
+                          _scrollController.animateTo(
+                            0,
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.easeInOutCubic,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
