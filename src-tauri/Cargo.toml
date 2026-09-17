@@ -1,6 +1,6 @@
 [package]
 name = "polyshift"
-version = "2.0.0"
+version = "2.1.0"
 description = "PolyShift - Fast AI-powered Language Companion for Windows (Rust + Tauri v2 + Svelte 5)"
 authors = ["kobalt"]
 edition = "2021"
@@ -21,7 +21,7 @@ tokio = { version = "1", features = ["full"] }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
 futures-util = "0.3"
 winreg = "0.52"
-image = { version = "0.25", default-features = false, features = ["png", "ico"] }
+image = { version = "0.25", default-features = false, features = ["png", "ico", "bmp"] }
 windows-sys = { version = "0.59", features = [
     "Win32_Foundation",
     "Win32_UI_WindowsAndMessaging",

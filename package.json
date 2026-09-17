@@ -1,6 +1,6 @@
 {
   "name": "polyshift",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "PolyShift - Fast AI-powered Language Companion for Windows (Rust + Tauri v2 + Svelte 5)",
   "type": "module",
   "scripts": {

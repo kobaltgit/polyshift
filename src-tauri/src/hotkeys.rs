@@ -1,6 +1,6 @@
-use crate::clipboard::{capture_selected_text, set_clipboard_text};
+use crate::clipboard::{capture_input_robust, set_clipboard_text, CapturedInput};
 use crate::gemini::{execute_streaming_action, AiAction};
-use crate::security::decrypt_string;
+use crate::security::{custom_base64_encode, decrypt_string};
 use crate::settings::load_settings;
 use serde::Serialize;
 use std::thread;
@@ -22,6 +22,8 @@ struct ActionPayload {
     badge: &'static str,
     title: &'static str,
     source_text: String,
+    is_image: bool,
+    image_preview: Option<String>,
 }
 
 pub fn start_hotkey_thread(app: AppHandle) {
@@ -66,8 +68,8 @@ fn handle_action_trigger(app: &AppHandle, action: AiAction) {
 
     // Run capture and API call on a separate worker
     thread::spawn(move || {
-        let captured = match capture_selected_text() {
-            Ok(text) => text,
+        let captured = match capture_input_robust() {
+            Ok(input) => input,
             Err(err) => {
                 show_hud_window(&app_clone);
                 let payload = ActionPayload {
@@ -75,6 +77,8 @@ fn handle_action_trigger(app: &AppHandle, action: AiAction) {
                     badge: action.badge(),
                     title: action.title(),
                     source_text: String::new(),
+                    is_image: false,
+                    image_preview: None,
                 };
                 let _ = app_clone.emit("action-started", &payload);
                 let _ = app_clone.emit("stream-error", &err);
@@ -84,11 +88,22 @@ fn handle_action_trigger(app: &AppHandle, action: AiAction) {
 
         show_hud_window(&app_clone);
 
+        let (source_text, is_image, image_preview) = match &captured {
+            CapturedInput::Text(text) => (text.clone(), false, None),
+            CapturedInput::ImagePng(png_bytes) => {
+                let preview_b64 = custom_base64_encode(png_bytes);
+                let data_url = format!("data:image/png;base64,{}", preview_b64);
+                ("Снимок экрана".to_string(), true, Some(data_url))
+            }
+        };
+
         let payload = ActionPayload {
             action,
             badge: action.badge(),
             title: action.title(),
-            source_text: captured.clone(),
+            source_text,
+            is_image,
+            image_preview,
         };
         let _ = app_clone.emit("action-started", &payload);
 

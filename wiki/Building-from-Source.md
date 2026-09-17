@@ -48,5 +48,6 @@ cargo check
 npm run tauri build
 ```
 После сборки готовые исполняемые файлы будут находиться в:
-* **Инсталлятор**: `src-tauri/target/release/bundle/nsis/PolyShift_2.0.0_x64-setup.exe`
-* **Автономный EXE**: `src-tauri/target/release/polyshift.exe`
+* **Инсталлятор EXE (NSIS)**: `src-tauri/target/release/bundle/nsis/PolyShift_2.1.0_x64-setup.exe`
+* **Пакет MSI**: `src-tauri/target/release/bundle/msi/PolyShift_2.1.0_x64_en-US.msi`
+* **Автономный EXE (Portable)**: `src-tauri/target/release/polyshift.exe` (упаковывается в `PolyShift-v2.1.0-Portable-x64.zip`)

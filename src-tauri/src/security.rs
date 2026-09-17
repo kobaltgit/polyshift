@@ -89,7 +89,7 @@ pub fn decrypt_string(encrypted_base64: &str) -> Result<String, String> {
 // Minimal fast standard Base64 helpers without extra external crate
 const B64_CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-fn custom_base64_encode(input: &[u8]) -> String {
+pub fn custom_base64_encode(input: &[u8]) -> String {
     let mut buf = String::with_capacity((input.len() + 2) / 3 * 4);
     for chunk in input.chunks(3) {
         let b0 = chunk[0];

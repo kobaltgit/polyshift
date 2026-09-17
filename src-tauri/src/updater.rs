@@ -5,7 +5,7 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter};
 
-pub const CURRENT_VERSION: &str = "2.0.0";
+pub const CURRENT_VERSION: &str = "2.1.0";
 pub const GITHUB_API_URL: &str = "https://api.github.com/repos/kobaltgit/polyshift/releases/latest";
 pub const COOLDOWN_SECONDS: u64 = 3600; // 1 hour cooldown to protect rate-limits
 pub const WEEKLY_CHECK_SECONDS: u64 = 7 * 24 * 3600;
@@ -17,6 +17,7 @@ pub struct UpdateCheckResult {
     pub latest_version: String,
     pub release_url: String,
     pub setup_url: Option<String>,
+    pub msi_url: Option<String>,
     pub portable_url: Option<String>,
     pub release_notes: String,
     pub published_at: String,
@@ -109,6 +110,7 @@ pub fn query_github_latest_release() -> Result<UpdateCheckResult, String> {
     let published_at = release.published_at.unwrap_or_default();
 
     let mut setup_url = None;
+    let mut msi_url = None;
     let mut portable_url = None;
 
     if let Some(assets) = release.assets {
@@ -117,6 +119,8 @@ pub fn query_github_latest_release() -> Result<UpdateCheckResult, String> {
                 let name_lower = name.to_lowercase();
                 if name_lower.contains("setup") && name_lower.ends_with(".exe") {
                     setup_url = Some(url.clone());
+                } else if name_lower.ends_with(".msi") {
+                    msi_url = Some(url.clone());
                 } else if name_lower.contains("portable") && name_lower.ends_with(".zip") {
                     portable_url = Some(url.clone());
                 }
@@ -132,6 +136,7 @@ pub fn query_github_latest_release() -> Result<UpdateCheckResult, String> {
         latest_version: latest_tag,
         release_url,
         setup_url,
+        msi_url,
         portable_url,
         release_notes,
         published_at,
@@ -183,6 +188,7 @@ pub fn check_updates_with_cooldown(
                 latest_version: CURRENT_VERSION.to_string(),
                 release_url: "https://github.com/kobaltgit/polyshift/releases".to_string(),
                 setup_url: None,
+                msi_url: None,
                 portable_url: None,
                 release_notes: String::new(),
                 published_at: String::new(),
@@ -199,6 +205,7 @@ pub fn check_updates_with_cooldown(
                 latest_version: CURRENT_VERSION.to_string(),
                 release_url: "https://github.com/kobaltgit/polyshift/releases".to_string(),
                 setup_url: None,
+                msi_url: None,
                 portable_url: None,
                 release_notes: String::new(),
                 published_at: String::new(),

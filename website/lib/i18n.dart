@@ -16,7 +16,7 @@ class I18n {
     'nav_faq': 'Частые вопросы',
     'nav_download': 'Скачать',
 
-    'hero_badge': '⚡ Релиз v2.0.0 • Rust + Tauri v2 + SvelteKit',
+    'hero_badge': '⚡ Релиз v2.1.0 • Rust + Tauri v2 + SvelteKit',
     'hero_title': 'Мгновенный ИИ-перевод и анализ текста прямо под курсором',
     'hero_subtitle': 'Выделите любой текст в любой программе Windows и нажмите Alt+T. Никаких переключений в браузер и ожидания. Стриминг перевода за 200 мс прямо у курсора при потреблении всего ~15 МБ памяти.',
     'hero_btn_install': 'Скачать установщик (.exe)',
@@ -127,7 +127,7 @@ class I18n {
     'nav_faq': 'FAQ',
     'nav_download': 'Download',
 
-    'hero_badge': '⚡ v2.0.0 Release • Rust + Tauri v2 + SvelteKit',
+    'hero_badge': '⚡ v2.1.0 Release • Rust + Tauri v2 + SvelteKit',
     'hero_title': 'Instant AI Translation & Text Analysis Right at Your Cursor',
     'hero_subtitle': 'Select any text in any Windows application and press Alt+T. No browser switching, no waiting. Real-time streaming at ~15 MB RAM usage.',
     'hero_btn_install': 'Download Installer (.exe)',

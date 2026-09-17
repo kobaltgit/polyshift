@@ -3,16 +3,25 @@ use std::thread;
 use std::time::Duration;
 use windows_sys::Win32::Foundation::HWND;
 use windows_sys::Win32::System::DataExchange::{
-    CloseClipboard, EmptyClipboard, GetClipboardData, GetClipboardSequenceNumber, OpenClipboard,
-    SetClipboardData,
+    CloseClipboard, EmptyClipboard, GetClipboardData, GetClipboardSequenceNumber,
+    IsClipboardFormatAvailable, OpenClipboard, SetClipboardData,
 };
-use windows_sys::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE};
+use windows_sys::Win32::System::Memory::{
+    GlobalAlloc, GlobalLock, GlobalSize, GlobalUnlock, GMEM_MOVEABLE,
+};
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
     GetAsyncKeyState, MapVirtualKeyW, SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT,
     KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC, VK_CONTROL, VK_MENU, VK_SHIFT,
 };
 
+const CF_DIB: u32 = 8;
 const CF_UNICODETEXT: u32 = 13;
+
+#[derive(Debug, Clone)]
+pub enum CapturedInput {
+    Text(String),
+    ImagePng(Vec<u8>),
+}
 
 /// Attempts to open the clipboard with retries in case another process holds it.
 fn try_open_clipboard(max_retries: u32, delay_ms: u64) -> bool {
@@ -27,55 +36,201 @@ fn try_open_clipboard(max_retries: u32, delay_ms: u64) -> bool {
     false
 }
 
-/// Safely captures highlighted text by waiting for physical key release,
-/// suppressing the Win32 Alt-menu loop, and sending hardware scan codes.
-pub fn capture_selected_text() -> Result<String, String> {
-    // 0. Backup existing clipboard content as graceful fallback
+/// Captures user input robustly:
+/// 1. Backs up any existing clipboard screenshot/image so it's not destroyed.
+/// 2. Attempts to capture newly selected text via Ctrl+C.
+/// 3. If no text was highlighted, checks if an image (screenshot from PrtScn / Win+Shift+S)
+///    is present in the clipboard.
+/// 4. Gracefully falls back to pre-existing text or returns a descriptive user guide error.
+pub fn capture_input_robust() -> Result<CapturedInput, String> {
+    // 0. Backup existing clipboard content (both text and image) before any manipulation
+    let pre_existing_image = get_clipboard_image_png().ok();
     let pre_existing_text = get_clipboard_text().ok().unwrap_or_default();
     let initial_seq = unsafe { GetClipboardSequenceNumber() };
 
     // 1. Wait for physical keys (Alt, etc.) to be released by user's fingers (up to 150ms)
     wait_for_physical_modifier_release();
 
-    // 2. Clear clipboard so we can definitively detect new text
+    // 2. Clear clipboard so we can definitively detect new text from Ctrl+C
     let _ = clear_clipboard();
     thread::sleep(Duration::from_millis(30));
 
     // 3. Send Ctrl + C with hardware scan codes and Alt-suppression
     simulate_ctrl_c_robust();
 
-    // 4. Wait for application to copy text (up to 1000ms polling for PDF readers / heavy apps)
-    // 40 iterations * 25ms = 1000ms maximum, returns instantly as soon as text is ready
-    for _ in 0..40 {
+    // 4. Wait for application to copy text (up to 750ms polling for PDF readers / heavy apps)
+    // 30 iterations * 25ms = 750ms maximum, returns instantly as soon as text is ready
+    for _ in 0..30 {
         thread::sleep(Duration::from_millis(25));
         let current_seq = unsafe { GetClipboardSequenceNumber() };
         if current_seq != initial_seq {
             if let Ok(text) = get_clipboard_text() {
                 let trimmed = text.trim();
                 if !trimmed.is_empty() {
-                    return Ok(trimmed.to_string());
+                    return Ok(CapturedInput::Text(trimmed.to_string()));
                 }
             }
         }
     }
 
-    // 5. Final attempt: check if clipboard has text even if sequence didn't register
+    // 5. Check if text arrived without sequence increment
     if let Ok(text) = get_clipboard_text() {
         let trimmed = text.trim();
         if !trimmed.is_empty() {
-            return Ok(trimmed.to_string());
+            return Ok(CapturedInput::Text(trimmed.to_string()));
         }
     }
 
-    // 6. Graceful fallback: If synthetic Ctrl+C was blocked by the target app,
-    // but the user had already copied text before pressing the hotkey, restore and use it!
+    // 6. If no text was selected by Ctrl+C: Check if the user took a screenshot!
+    if let Some(img_bytes) = pre_existing_image {
+        return Ok(CapturedInput::ImagePng(img_bytes));
+    }
+
+    // Also check if an image is currently in the clipboard (e.g. placed during delay)
+    if let Ok(img_bytes) = get_clipboard_image_png() {
+        return Ok(CapturedInput::ImagePng(img_bytes));
+    }
+
+    // 7. Graceful fallback: If pre-existing text was present in clipboard before hotkey press
     let trimmed_pre = pre_existing_text.trim();
     if !trimmed_pre.is_empty() {
         let _ = set_clipboard_text(trimmed_pre);
-        return Ok(trimmed_pre.to_string());
+        return Ok(CapturedInput::Text(trimmed_pre.to_string()));
     }
 
-    Err("Не удалось захватить текст: убедитесь, что фрагмент выделен (или скопируйте его через Ctrl+C перед вызовом)".into())
+    Err("Не удалось захватить текст или скриншот: выделите текст или сделайте снимок экрана (Win + Shift + S)".into())
+}
+
+/// Backwards-compatible helper for text-only capture
+#[allow(dead_code)]
+pub fn capture_selected_text() -> Result<String, String> {
+    match capture_input_robust()? {
+        CapturedInput::Text(text) => Ok(text),
+        CapturedInput::ImagePng(_) => {
+            Err("В буфере обмена обнаружен скриншот, но запрошено только текстовое выделение".into())
+        }
+    }
+}
+
+/// Reads CF_DIB image from clipboard, constructs a valid BMP header,
+/// decodes via `image` crate and encodes to high-quality compressed PNG bytes.
+pub fn get_clipboard_image_png() -> Result<Vec<u8>, String> {
+    unsafe {
+        if IsClipboardFormatAvailable(CF_DIB) == 0 {
+            return Err("В буфере обмена нет изображения".into());
+        }
+    }
+
+    if !try_open_clipboard(8, 10) {
+        return Err("Не удалось открыть буфер обмена для чтения изображения".into());
+    }
+
+    unsafe {
+        let h_data = GetClipboardData(CF_DIB);
+        if h_data.is_null() {
+            CloseClipboard();
+            return Err("Данные изображения отсутствуют в буфере".into());
+        }
+
+        let size = GlobalSize(h_data as _);
+        if size < 40 {
+            CloseClipboard();
+            return Err("Размер данных DIB слишком мал".into());
+        }
+
+        let ptr = GlobalLock(h_data as _) as *const u8;
+        if ptr.is_null() {
+            CloseClipboard();
+            return Err("Не удалось заблокировать память буфера".into());
+        }
+
+        let dib_bytes = std::slice::from_raw_parts(ptr, size);
+        let result = convert_dib_to_png(dib_bytes);
+
+        GlobalUnlock(h_data as _);
+        CloseClipboard();
+
+        result
+    }
+}
+
+/// Converts raw Windows CF_DIB bytes to PNG
+fn convert_dib_to_png(dib_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    if dib_bytes.len() < 40 {
+        return Err("DIB data too short".into());
+    }
+
+    let bi_size = u32::from_le_bytes(
+        dib_bytes[0..4]
+            .try_into()
+            .map_err(|_| "Failed to read biSize")?,
+    ) as usize;
+
+    if bi_size < 40 || bi_size > dib_bytes.len() {
+        return Err(format!("Invalid biSize: {}", bi_size));
+    }
+
+    let bi_bit_count = u16::from_le_bytes(
+        dib_bytes[14..16]
+            .try_into()
+            .map_err(|_| "Failed to read biBitCount")?,
+    );
+    let bi_compression = u32::from_le_bytes(
+        dib_bytes[16..20]
+            .try_into()
+            .map_err(|_| "Failed to read biCompression")?,
+    );
+    let bi_clr_used = if bi_size >= 36 {
+        u32::from_le_bytes(
+            dib_bytes[32..36]
+                .try_into()
+                .map_err(|_| "Failed to read biClrUsed")?,
+        ) as usize
+    } else {
+        0
+    };
+
+    let palette_size = if bi_clr_used != 0 {
+        bi_clr_used * 4
+    } else if bi_bit_count <= 8 {
+        (1usize << bi_bit_count) * 4
+    } else if bi_compression == 3 && bi_size == 40 {
+        // BI_BITFIELDS with standard 40-byte BITMAPINFOHEADER has 3 RGB bitmasks (12 bytes)
+        12
+    } else {
+        0
+    };
+
+    let bf_off_bits = 14 + bi_size + palette_size;
+    let total_size = (14 + dib_bytes.len()) as u32;
+
+    let mut bmp_data = Vec::with_capacity(14 + dib_bytes.len());
+    bmp_data.extend_from_slice(b"BM");
+    bmp_data.extend_from_slice(&total_size.to_le_bytes());
+    bmp_data.extend_from_slice(&[0u8; 4]); // bfReserved1, bfReserved2
+    bmp_data.extend_from_slice(&(bf_off_bits as u32).to_le_bytes());
+    bmp_data.extend_from_slice(dib_bytes);
+
+    let img = image::load_from_memory_with_format(&bmp_data, image::ImageFormat::Bmp)
+        .map_err(|e| format!("Не удалось декодировать изображение из буфера: {}", e))?;
+
+    // Optimize resolution if screenshot is extremely large (multi-monitor or 4K/8K)
+    let (w, h) = (img.width(), img.height());
+    let final_img = if w > 2560 || h > 2560 {
+        img.resize(2560, 2560, image::imageops::FilterType::Triangle)
+    } else {
+        img
+    };
+
+    let mut png_bytes = Vec::new();
+    final_img
+        .write_to(
+            &mut std::io::Cursor::new(&mut png_bytes),
+            image::ImageFormat::Png,
+        )
+        .map_err(|e| format!("Не удалось упаковать PNG: {}", e))?;
+
+    Ok(png_bytes)
 }
 
 /// Sets unicode text directly to the Windows clipboard.

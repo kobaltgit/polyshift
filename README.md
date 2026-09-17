@@ -1,3 +1,5 @@
+![Polyshift Banner](./banner.svg)
+
 <p align="center">
   <img src="src-tauri/icons/128x128.png" width="96" height="96" alt="PolyShift Logo" />
   <h1 align="center">PolyShift</h1>

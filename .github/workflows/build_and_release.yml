@@ -1,7 +1,15 @@
 name: Build and Release PolyShift
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Имя тега релиза (например, v2.1.0)'
+        required: false
+        default: 'v2.1.0'
 
 permissions:
   contents: write
@@ -12,6 +20,22 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Determine Tag & Version
+        id: release_info
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch" -and "${{ inputs.tag }}" -ne "") {
+            $tag = "${{ inputs.tag }}"
+          } elseif ("${{ github.ref_type }}" -eq "tag") {
+            $tag = "${{ github.ref_name }}"
+          } else {
+            $tag = "v2.1.0"
+          }
+          $version = $tag -replace '^v', ''
+          echo "tag=$tag" >> $env:GITHUB_OUTPUT
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Target release tag: $tag, version: $version"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -28,23 +52,39 @@ jobs:
         run: npm ci
 
       - name: Build Tauri Desktop App
+        id: tauri
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'PolyShift ${{ github.ref_name }}'
+          tagName: ${{ steps.release_info.outputs.tag }}
+          releaseName: 'PolyShift ${{ steps.release_info.outputs.tag }}'
           releaseBody: |
-            ## PolyShift ${{ github.ref_name }}
+            ## PolyShift ${{ steps.release_info.outputs.tag }}
             
-            ### 🚀 Установка
-            * **Установщик Windows (NSIS)**: `PolyShift_${{ github.ref_name }}_x64-setup.exe`
-            * **Портабельная версия**: `PolyShift-${{ github.ref_name }}-Portable-x64.zip`
+            ### 🚀 Загрузки (Windows x64)
+            * 📦 **Установщик EXE (NSIS)**: `PolyShift_${{ steps.release_info.outputs.version }}_x64-setup.exe`
+            * 🛠️ **Корпоративный инсталлятор MSI**: `PolyShift_${{ steps.release_info.outputs.version }}_x64_en-US.msi`
+            * 💼 **Портабельная версия ZIP**: `PolyShift-${{ steps.release_info.outputs.tag }}-Portable-x64.zip` (автономный запуск без установки)
             
-            ### 📖 Возможности:
-            * Быстрый перевод по Alt+T
-            * Исправление грамматики и стиля по Alt+G
-            * Суммаризация текста по Alt+S
-            * Анализ и объяснение по Alt+E
+            ### ✨ Что нового в версии ${{ steps.release_info.outputs.version }}:
+            * 📷 **Распознавание и перевод скриншотов (Zero-learning UX)**:
+              * Нажмите `Win + Shift + S` (или `PrtScn`), затем `Alt + T` / `Alt + E` / `Alt + S` / `Alt + G`.
+              * Мгновенный мультимодальный OCR, перевод и анализ текста со снимков экранов, кода и ошибок прямо в HUD.
+            * 🖥️ **Превью скриншота в HUD**: визуальный бейдж и миниатюра фрагмента.
+            * ⚡ **Повышенная надежность перехвата**: интеллектуальный многоуровневый опрос буфера обмена.
+            * 📦 **Три формата релиза**: установщик EXE, корпоративный пакет MSI и автономный Portable ZIP.
           releaseDraft: false
           prerelease: false
+
+      - name: Package and Upload Portable ZIP
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ steps.release_info.outputs.tag }}"
+          $zipName = "PolyShift-${tag}-Portable-x64.zip"
+          Write-Host "Archiving src-tauri/target/release/polyshift.exe to $zipName..."
+          Compress-Archive -Path "src-tauri/target/release/polyshift.exe" -DestinationPath $zipName -Force
+          Write-Host "Uploading $zipName to release $tag..."
+          gh release upload $tag $zipName --clobber

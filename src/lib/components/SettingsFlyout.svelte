@@ -197,7 +197,7 @@
         updateStatus = {
           checked: true,
           hasUpdate: false,
-          latestVersion: '2.0.0',
+          latestVersion: '2.1.0',
           msg: 'У вас установлена актуальная версия'
         };
       }
@@ -270,7 +270,7 @@
       </div>
       <div>
         <h1 class="header-title">PolyShift</h1>
-        <p class="header-subtitle">Настройки приложения • v2.0.0</p>
+        <p class="header-subtitle">Настройки приложения • v2.1.0</p>
       </div>
     </div>
 
@@ -517,7 +517,7 @@
           <div class="version-badge-huge">
             <Sparkles size={28} color="#3B82F6" />
           </div>
-          <h2 class="updates-app-name">PolyShift v2.0.0</h2>
+          <h2 class="updates-app-name">PolyShift v2.1.0</h2>
           <p class="updates-app-desc">Нативный скоростной AI-ассистент для Windows (Tauri v2 + Rust + SvelteKit)</p>
 
           <div class="updates-action-box">

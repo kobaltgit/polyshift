@@ -1,6 +1,6 @@
 class AppConstants {
   static const String appName = 'PolyShift';
-  static const String version = '2.0.0';
+  static const String version = '2.1.0';
   static const String githubRepo = 'kobaltgit/polyshift';
   static const String githubUrl = 'https://github.com/kobaltgit/polyshift';
   static const String releasesUrl = 'https://github.com/kobaltgit/polyshift/releases/latest';

@@ -1,0 +1,235 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <!-- Глубокий градиент фона (Cosmic Indigo / Space Slate) -->
+    <radialGradient id="bgGlow" cx="80%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#1e1338"/>
+      <stop offset="50%" stop-color="#0c0919"/>
+      <stop offset="100%" stop-color="#05040a"/>
+    </radialGradient>
+
+    <!-- Акцентный градиент для PolyShift (Cyan -> Indigo -> Violet) -->
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+
+    <!-- Градиент кнопки действия (Replace) -->
+    <linearGradient id="actionBtnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+
+    <!-- Четкая обводка карточки (без затухания) -->
+    <linearGradient id="cardBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="#818cf8" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#c084fc" stop-opacity="0.6"/>
+    </linearGradient>
+
+    <!-- Маска скругления для правого модуля (все 4 угла идеальны) -->
+    <clipPath id="polyClip">
+      <rect width="470" height="410" rx="16"/>
+    </clipPath>
+
+    <!-- Неоновое свечение AI элементов -->
+    <filter id="aiGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Фон -->
+  <rect width="1280" height="640" fill="url(#bgGlow)"/>
+
+  <!-- Фоновая сетка Fluent UI -->
+  <g stroke="#1e183a" stroke-width="1" opacity="0.4">
+    <line x1="80" y1="80" x2="80" y2="560" stroke-dasharray="4,4"/>
+    <line x1="1200" y1="80" x2="1200" y2="560" stroke-dasharray="4,4"/>
+    <line x1="60" y1="100" x2="1220" y2="100"/>
+    <line x1="60" y1="540" x2="1220" y2="540"/>
+  </g>
+
+  <!-- ==================== ПРАВАЯ ЧАСТЬ: МАКЕТ ВСПЛЫВАЮЩЕГО AI-HUD ==================== -->
+  <g transform="translate(700, 95)">
+    <!-- Фоновое свечение окна -->
+    <rect x="-8" y="-8" width="486" height="426" rx="22" fill="#6366f1" opacity="0.15" filter="blur(20px)"/>
+
+    <!-- Содержимое карточки под маской скругления -->
+    <g clip-path="url(#polyClip)">
+      <!-- Базовый фон карточки -->
+      <rect width="470" height="410" fill="#0b0a16" fill-opacity="0.94"/>
+
+      <!-- 1. Имитация выделенного исходного текста в редакторе -->
+      <g transform="translate(20, 20)">
+        <text x="0" y="14" fill="#64748b" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="600">
+          SELECTED TEXT (SOURCE):
+        </text>
+        
+        <rect y="24" width="430" height="46" rx="8" fill="#131024" stroke="#251e3e" stroke-width="1"/>
+        <!-- Подсветка выделения курсором -->
+        <rect x="8" y="32" width="370" height="18" rx="4" fill="#38bdf8" fill-opacity="0.2"/>
+        <text x="14" y="45" fill="#e2e8f0" font-family="monospace" font-size="12">
+          "The core advantage of this native desktop architecture..."
+        </text>
+        <text x="382" y="45" fill="#38bdf8" font-family="monospace" font-size="12">|</text>
+      </g>
+
+      <!-- 2. Плавающий AI-виджет PolyShift -->
+      <g transform="translate(20, 98)">
+        <!-- Шапка виджета -->
+        <g transform="translate(0, 0)">
+          <!-- Иконка искры AI (Sparkle) -->
+          <text x="0" y="14" fill="#38bdf8" font-size="16">✦</text>
+          <text x="22" y="14" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700">
+            PolyShift HUD
+          </text>
+
+          <!-- Бейдж модели -->
+          <rect x="300" y="-2" width="130" height="24" rx="12" fill="#1e183a" stroke="#818cf8" stroke-width="1"/>
+          <text x="365" y="14" text-anchor="middle" fill="#c084fc" font-family="sans-serif" font-size="11" font-weight="700">
+            ⚡ GEMINI FLASH
+          </text>
+        </g>
+
+        <!-- Табы действий (Action Tabs) -->
+        <g transform="translate(0, 32)">
+          <!-- Таб 1: Translate (Активный) -->
+          <rect x="0" y="0" width="100" height="32" rx="8" fill="#1e1b4b" stroke="#38bdf8" stroke-width="1.2"/>
+          <text x="50" y="21" text-anchor="middle" fill="#38bdf8" font-family="sans-serif" font-size="12" font-weight="700">🌐 Translate</text>
+
+          <!-- Таб 2: Polish -->
+          <rect x="108" y="0" width="90" height="32" rx="8" fill="#131024" stroke="#251e3e" stroke-width="1"/>
+          <text x="153" y="21" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="12">✍️ Polish</text>
+
+          <!-- Таб 3: Summarize -->
+          <rect x="206" y="0" width="112" height="32" rx="8" fill="#131024" stroke="#251e3e" stroke-width="1"/>
+          <text x="262" y="21" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="12">📝 Summarize</text>
+
+          <!-- Таб 4: Explain -->
+          <rect x="326" y="0" width="104" height="32" rx="8" fill="#131024" stroke="#251e3e" stroke-width="1"/>
+          <text x="378" y="21" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="12">💡 Explain</text>
+        </g>
+
+        <!-- Окно с готовым ответом AI -->
+        <g transform="translate(0, 76)">
+          <rect width="430" height="110" rx="10" fill="#131024" stroke="#312a52" stroke-width="1"/>
+          
+          <text x="14" y="26" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600">
+            «Ключевое преимущество этой нативной архитектуры —
+          </text>
+          <text x="14" y="48" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600">
+            мгновенный отклик и сверхнизкое потребление ОЗУ...»
+          </text>
+
+          <!-- Разделитель -->
+          <line x1="14" y1="68" x2="416" y2="68" stroke="#1f1b38" stroke-width="1"/>
+
+          <!-- Скорость ответа и метаданные -->
+          <text x="14" y="92" fill="#38bdf8" font-family="monospace" font-size="11" font-weight="700">
+            ⚡ 142 ms
+          </text>
+          <text x="416" y="92" text-anchor="end" fill="#64748b" font-family="sans-serif" font-size="11">
+            English → Russian
+          </text>
+        </g>
+
+        <!-- Нижняя панель действий -->
+        <g transform="translate(0, 198)">
+          <!-- Кнопка замены выделенного текста -->
+          <rect width="260" height="42" rx="8" fill="url(#actionBtnGrad)" filter="url(#aiGlow)"/>
+          <text x="130" y="26" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700">
+            ↵ REPLACE SELECTION
+          </text>
+
+          <!-- Кнопка копирования в буфер -->
+          <rect x="270" y="0" width="160" height="42" rx="8" fill="#1e183a" stroke="#47406e" stroke-width="1"/>
+          <text x="350" y="26" text-anchor="middle" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600">
+            📋 Copy to Clipboard
+          </text>
+        </g>
+      </g>
+    </g>
+
+    <!-- САМЫЙ ВЕРХНИЙ СЛОЙ: Обводка рамки (видна во всех 4 углах) -->
+    <rect x="0.75" y="0.75" width="468.5" height="408.5" rx="16" fill="none" stroke="url(#cardBorder)" stroke-width="1.5"/>
+  </g>
+
+  <!-- ==================== ЛЕВАЯ ЧАСТЬ: ИНФОРМАЦИЯ О ПРОЕКТЕ ==================== -->
+  <g transform="translate(100, 145)">
+    <!-- Верхний бейдж категории -->
+    <g>
+      <rect width="290" height="34" rx="17" fill="#1e1b4b" fill-opacity="0.6" stroke="#818cf8" stroke-opacity="0.6"/>
+      <text x="145" y="22" text-anchor="middle" fill="#38bdf8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" letter-spacing="1">
+        ✨ DESKTOP AI ASSISTANT FOR WINDOWS
+      </text>
+    </g>
+
+    <!-- Главный заголовок проекта -->
+    <text x="0" y="98" fill="url(#accentGrad)" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="64" font-weight="900" letter-spacing="-1.5">
+      PolyShift
+    </text>
+
+    <!-- Описание и слоган -->
+    <text x="0" y="148" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="600">
+      Instant AI actions on any selected text
+    </text>
+    <text x="0" y="178" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="400">
+      Translate, polish, summarize &amp; explain via hotkeys
+    </text>
+
+    <!-- Метрики и фичи (Specs) -->
+    <g transform="translate(0, 222)">
+      <!-- Метрика 1: Hotkey -->
+      <g transform="translate(0, 0)">
+        <rect width="145" height="36" rx="8" fill="#131024" stroke="#38bdf8" stroke-width="1.2"/>
+        <text x="72.5" y="23" text-anchor="middle" fill="#38bdf8" font-family="sans-serif" font-size="13" font-weight="700">
+          ⚡ Global Hotkey
+        </text>
+      </g>
+
+      <!-- Метрика 2: RAM -->
+      <g transform="translate(155, 0)">
+        <rect width="140" height="36" rx="8" fill="#131024" stroke="#818cf8" stroke-width="1.2"/>
+        <text x="70" y="23" text-anchor="middle" fill="#c084fc" font-family="sans-serif" font-size="13" font-weight="700">
+          &lt; 25 MB RAM
+        </text>
+      </g>
+
+      <!-- Метрика 3: Gemini -->
+      <g transform="translate(305, 0)">
+        <rect width="145" height="36" rx="8" fill="#131024" stroke="#334155" stroke-width="1.2"/>
+        <text x="72.5" y="23" text-anchor="middle" fill="#f1f5f9" font-family="sans-serif" font-size="13" font-weight="600">
+          ✦ Gemini Inside
+        </text>
+      </g>
+    </g>
+
+    <!-- Стек технологий (Tech tags) -->
+    <g transform="translate(0, 278)">
+      <!-- Rust -->
+      <g transform="translate(0, 0)">
+        <rect width="85" height="32" rx="8" fill="#0b0a16" stroke="#312a52"/>
+        <text x="42.5" y="21" text-anchor="middle" fill="#f8fafc" font-family="sans-serif" font-size="13" font-weight="500">Rust</text>
+      </g>
+
+      <!-- Tauri v2 -->
+      <g transform="translate(95, 0)">
+        <rect width="105" height="32" rx="8" fill="#0b0a16" stroke="#312a52"/>
+        <text x="52.5" y="21" text-anchor="middle" fill="#f8fafc" font-family="sans-serif" font-size="13" font-weight="500">Tauri v2</text>
+      </g>
+
+      <!-- Gemini API -->
+      <g transform="translate(210, 0)">
+        <rect width="115" height="32" rx="8" fill="#0b0a16" stroke="#312a52"/>
+        <text x="57.5" y="21" text-anchor="middle" fill="#f8fafc" font-family="sans-serif" font-size="13" font-weight="500">Gemini API</text>
+      </g>
+
+      <!-- Win 10/11 -->
+      <g transform="translate(335, 0)">
+        <rect width="110" height="32" rx="8" fill="#0b0a16" stroke="#312a52"/>
+        <text x="55" y="21" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="13" font-weight="500">Win 10/11</text>
+      </g>
+    </g>
+  </g>
+</svg>

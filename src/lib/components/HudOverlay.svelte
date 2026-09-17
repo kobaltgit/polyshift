@@ -7,6 +7,7 @@
     Check, 
     X, 
     Sparkles, 
+    Camera,
     Settings, 
     AlertCircle, 
     ChevronDown, 
@@ -21,6 +22,9 @@
   let title = $state('PolyShift AI');
   let badge = $state('Alt + T');
   let sourceText = $state('');
+  let isImage = $state(false);
+  let imagePreview = $state<string | null>(null);
+  let showImagePreview = $state(false);
   let outputText = $state('');
   let errorMessage = $state('');
   let status = $state<'idle' | 'streaming' | 'done' | 'error'>('idle');
@@ -90,6 +94,9 @@
         title = payload.title || 'PolyShift AI';
         badge = payload.badge || 'Alt + T';
         sourceText = payload.source_text || '';
+        isImage = !!payload.is_image;
+        imagePreview = payload.image_preview || null;
+        showImagePreview = false;
         outputText = '';
         errorMessage = '';
         status = 'streaming';
@@ -143,6 +150,12 @@
       <div class="title-wrap" data-tauri-drag-region>
         <span class="hud-title">{title}</span>
         <span class="hud-badge">{badge}</span>
+        {#if isImage}
+          <span class="hud-badge image-badge">
+            <Camera size={11} class="badge-icon" />
+            Скриншот
+          </span>
+        {/if}
       </div>
     </div>
 
@@ -167,8 +180,35 @@
     </div>
   </header>
 
-  <!-- Collapsible Original Source Preview -->
-  {#if sourceText}
+  <!-- Collapsible Screenshot / Source Text Preview -->
+  {#if isImage && imagePreview}
+    <section class="source-preview image-source-preview">
+      <button 
+        class="source-toggle" 
+        onclick={() => showImagePreview = !showImagePreview}
+        type="button"
+      >
+        <span class="source-label">
+          <Camera size={12} class="source-icon" />
+          Снимок экрана:
+        </span>
+        <span class="source-snippet image-snippet-hint">
+          {showImagePreview ? 'Нажмите, чтобы свернуть' : 'Нажмите, чтобы просмотреть снимок'}
+        </span>
+        {#if showImagePreview}
+          <ChevronUp size={13} />
+        {:else}
+          <ChevronDown size={13} />
+        {/if}
+      </button>
+
+      {#if showImagePreview}
+        <div class="image-preview-container animate-fade-in">
+          <img src={imagePreview} alt="Захваченный скриншот" class="screenshot-img" />
+        </div>
+      {/if}
+    </section>
+  {:else if sourceText}
     <section class="source-preview">
       <button 
         class="source-toggle" 
@@ -199,7 +239,7 @@
     {#if status === 'streaming' && !outputText}
       <div class="loading-state">
         <div class="pulsing-orb"></div>
-        <span>Генерирую ответ через Gemini...</span>
+        <span>{isImage ? 'Распознаю скриншот и обрабатываю...' : 'Генерирую ответ через Gemini...'}</span>
       </div>
     {:else if status === 'error'}
       <div class="error-state">
@@ -221,11 +261,12 @@
     {:else}
       <div class="empty-state">
         <Sparkles size={24} class="empty-icon" />
-        <p>Выделите любой текст в Windows и нажмите горячую клавишу</p>
+        <p>Выделите текст или сделайте скриншот (Win+Shift+S) и нажмите горячую клавишу</p>
         <div class="shortcuts-row">
           <span class="pill">Alt+T Перевод</span>
+          <span class="pill">Alt+E Объяснить</span>
           <span class="pill">Alt+G Стиль</span>
-          <span class="pill">Alt+S Суммаризация</span>
+          <span class="pill">Alt+S Тезисы</span>
         </div>
       </div>
     {/if}
@@ -236,7 +277,7 @@
     <div class="status-indicator">
       {#if status === 'streaming'}
         <span class="dot streaming"></span>
-        <span class="status-text">Стриминг...</span>
+        <span class="status-text">{isImage ? 'Скриншот • Обработка' : 'Стриминг...'}</span>
       {:else if status === 'done'}
         <span class="dot done"></span>
         <span class="status-text">Готово</span>
@@ -329,6 +370,19 @@
     font-family: 'JetBrains Mono', monospace;
   }
 
+  .image-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.45);
+    color: #6EE7B7;
+  }
+
+  :global(.badge-icon) {
+    display: inline-block;
+  }
+
   .hud-header-actions {
     display: flex;
     align-items: center;
@@ -373,6 +427,11 @@
     border-bottom: 1px solid rgba(148, 163, 184, 0.08);
   }
 
+  .image-source-preview {
+    border-bottom: 1px solid rgba(16, 185, 129, 0.25);
+    background: rgba(15, 23, 42, 0.6);
+  }
+
   .source-toggle {
     width: 100%;
     display: flex;
@@ -389,6 +448,13 @@
   .source-label {
     font-weight: 600;
     color: #64748B;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  :global(.source-icon) {
+    color: #6EE7B7;
   }
 
   .source-snippet {
@@ -397,6 +463,12 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     color: #CBD5E1;
+  }
+
+  .image-snippet-hint {
+    color: #93C5FD;
+    font-size: 11px;
+    font-style: italic;
   }
 
   .source-full-box {
@@ -412,6 +484,28 @@
     overflow-y: auto;
     user-select: text;
     -webkit-user-select: text;
+  }
+
+  .image-preview-container {
+    margin-top: 6px;
+    padding: 6px;
+    background: rgba(6, 11, 20, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-height: 160px;
+    overflow: hidden;
+  }
+
+  .screenshot-img {
+    max-width: 100%;
+    max-height: 148px;
+    object-fit: contain;
+    border-radius: 6px;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
   }
 
   /* Body */
@@ -451,36 +545,36 @@
     border-radius: 50%;
     background: #3B82F6;
     box-shadow: 0 0 12px #3B82F6;
-    animation: pulseGlow 1.2s infinite ease-in-out;
+    animation: pulseOrb 1.4s ease-in-out infinite;
   }
 
   .error-state {
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
     padding: 12px;
-    background: rgba(239, 68, 68, 0.12);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
     border-radius: 10px;
+    color: #FCA5A5;
   }
 
   :global(.error-icon) {
-    color: #F87171;
+    color: #EF4444;
     flex-shrink: 0;
     margin-top: 2px;
   }
 
   .error-title {
-    font-size: 12.5px;
-    font-weight: 700;
-    color: #FCA5A5;
+    font-size: 13px;
+    font-weight: 600;
     margin-bottom: 2px;
+    color: #F87171;
   }
 
   .error-desc {
     font-size: 12px;
-    color: #FECACA;
     line-height: 1.4;
+    color: #FCA5A5;
   }
 
   .empty-state {
@@ -488,37 +582,32 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: #64748B;
     text-align: center;
-    padding: 24px 10px;
-    color: #94A3B8;
+    padding: 20px;
   }
 
   :global(.empty-icon) {
     color: #3B82F6;
-    margin-bottom: 10px;
-    opacity: 0.8;
-  }
-
-  .empty-state p {
-    font-size: 13px;
-    margin-bottom: 12px;
+    opacity: 0.7;
   }
 
   .shortcuts-row {
     display: flex;
-    gap: 6px;
     flex-wrap: wrap;
     justify-content: center;
+    gap: 8px;
   }
 
   .pill {
     font-size: 11px;
     padding: 3px 8px;
-    background: rgba(30, 41, 59, 0.7);
-    border: 1px solid rgba(148, 163, 184, 0.15);
-    border-radius: 9999px;
-    color: #93C5FD;
-    font-family: 'JetBrains Mono', monospace;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #94A3B8;
   }
 
   /* Footer */
@@ -526,10 +615,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 14px;
+    padding: 7px 14px;
     background: rgba(15, 23, 42, 0.5);
     border-top: 1px solid rgba(148, 163, 184, 0.08);
     font-size: 11px;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .status-indicator {
@@ -539,25 +630,25 @@
   }
 
   .dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
   }
 
   .dot.streaming {
     background: #3B82F6;
     box-shadow: 0 0 8px #3B82F6;
-    animation: pulseGlow 1s infinite;
+    animation: pulseDot 1s infinite;
   }
 
   .dot.done {
     background: #10B981;
-    box-shadow: 0 0 6px #10B981;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
   }
 
   .dot.error {
     background: #EF4444;
-    box-shadow: 0 0 6px #EF4444;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
   }
 
   .dot.idle {
@@ -566,10 +657,98 @@
 
   .status-text {
     color: #94A3B8;
+    font-size: 11px;
+  }
+
+  .footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
   .hint-key {
     color: #64748B;
+    font-size: 10.5px;
     font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Markdown Styles inside HUD */
+  :global(.markdown-body) {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #E2E8F0;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  :global(.markdown-body p) {
+    margin-bottom: 8px;
+  }
+
+  :global(.markdown-body p:last-child) {
+    margin-bottom: 0;
+  }
+
+  :global(.markdown-body pre) {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 8px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    margin: 8px 0;
+  }
+
+  :global(.markdown-body code) {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #93C5FD;
+    background: rgba(59, 130, 246, 0.12);
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+
+  :global(.markdown-body pre code) {
+    background: transparent;
+    padding: 0;
+    color: #E2E8F0;
+  }
+
+  :global(.markdown-body ul, .markdown-body ol) {
+    padding-left: 18px;
+    margin: 6px 0;
+  }
+
+  :global(.markdown-body li) {
+    margin-bottom: 4px;
+  }
+
+  :global(.markdown-body strong) {
+    color: #FFFFFF;
+    font-weight: 600;
+  }
+
+  /* Animations */
+  @keyframes pulseOrb {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.3); opacity: 1; }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 </style>
